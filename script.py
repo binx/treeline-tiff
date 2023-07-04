@@ -1,4 +1,5 @@
 import rasterio
+from rasterio.plot import show
 from bresenham import bresenham
 import matplotlib.pyplot as plt
 
@@ -22,8 +23,11 @@ def findClearLineOfSight(e, trees):
           axis = 1
 
         slope = (z2 - z1)/(tree2[axis] - tree1[axis])
-        #y = mx + b
         pixelsBetween = list(bresenham(tree1[0], tree1[1], tree2[0], tree2[1]))
+        # try to throw out the more useless ones
+        if (len(pixelsBetween) < 10):
+          break
+
         clearLineOfSight = True
         for j in range(len(pixelsBetween)):
           zPixel = e[pixelsBetween[j][0], pixelsBetween[j][1]]
@@ -52,17 +56,22 @@ def readTiff(clearance):
   with rasterio.open('./sample.tif') as src:
     e = src.read()[0]
     print(e.shape)
-    rows = e.shape[0]
-    cols = e.shape[1]
+    rows = e.shape[1]
+    cols = e.shape[0]
+
+    plt.imshow(e)
 
     trees = []
 
-    for x in range(1, rows - 1):
-      for y in range(1, cols - 1):
+    for x in range(1, cols - 1):
+      for y in range(1, rows - 1):
         surrounding = [e[x-1, y-1], e[x, y-1], e[x+1, y-1], e[x-1, y], e[x+1, y], e[x-1, y+1], e[x, y+1], e[x+1, y+1]]
         if (all(i + clearance < e[x][y]  for i in surrounding)):
           trees.append([x,y])
+          # reverse y and x for drawing geotiff lat/lng
+          plt.plot(y, x, 'ro')
 
+    plt.show()
     print("treeList", trees)
     findClearLineOfSight(e, trees)
 
