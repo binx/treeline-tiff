@@ -1,7 +1,9 @@
 import rasterio
-from rasterio.plot import show
+from rasterio.plot import show, show_hist
 from bresenham import bresenham
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 
 def findClearLineOfSight(e, trees):
@@ -59,26 +61,34 @@ def readTiff(clearance):
     rows = e.shape[1]
     cols = e.shape[0]
 
-    plt.imshow(e)
-
     trees = []
 
-    for x in range(1, cols - 1):
-      for y in range(1, rows - 1):
-        surrounding = [e[x-1, y-1], e[x, y-1], e[x+1, y-1], e[x-1, y], e[x+1, y], e[x-1, y+1], e[x, y+1], e[x+1, y+1]]
+    points = []
+
+    plt.pcolormesh(e)
+
+    s = 2
+
+    for x in range(2, cols - 2):
+      for y in range(2, rows - 2):
+        # surrounding = [e[x-1, y-1], e[x, y-1], e[x+1, y-1], e[x-1, y], e[x+1, y], e[x-1, y+1], e[x, y+1], e[x+1, y+1]]
+        surrounding = [e[x, y-s], e[x-s, y], e[x+s, y], e[x, y+s]]
+
+        # print(x, y, e[x,y], surrounding)
         if (all(i + clearance < e[x][y]  for i in surrounding)):
           trees.append([x,y])
           # reverse y and x for drawing geotiff lat/lng
-          plt.plot(y, x, 'ro')
+          plt.plot(y, x, marker = 'o', color = "red", markersize = 1)
 
     plt.show()
+
     print("treeList", trees)
-    findClearLineOfSight(e, trees)
+    # findClearLineOfSight(e, trees)
 
 if __name__ == '__main__':
   # I have this clearance variable for how much higher the tree needs to be
   # than it's neighbors. Right now this is largely just fudging to get
   # enough data to test. Some points are very close to each other and
   # should possibly be thrown out?
-  readTiff(clearance=.5)
+  readTiff(clearance=5)
       
